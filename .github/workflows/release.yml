@@ -29,7 +29,7 @@ jobs:
           echo TAG_NAME="${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
       - name: Create Release
         id: create_release
-        uses: shogo82148/actions-create-release@v1.7.3
+        uses: shogo82148/actions-create-release@v1.7.4
         with:
           release_name: ${{ steps.branch_name.outputs.TAG_NAME }}
           draft: true # So we can manually edit before publishing
@@ -110,6 +110,14 @@ jobs:
           asset_path: ./k0s
           asset_name: k0s-${{ needs.release.outputs.tag_name }}-amd64
           asset_content_type: application/octet-stream
+
+      - name: Upload Release Assets - Airgap Image List
+        uses: shogo82148/actions-upload-release-asset@v1.7.5
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./airgap-images.txt
+          asset_name: airgap-images-list.txt
+          asset_content_type: text/plain
 
       - name: Upload Release Assets - Signature
         uses: shogo82148/actions-upload-release-asset@v1.7.5
@@ -413,7 +421,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download assets for generating checksums
-        uses: robinraju/release-downloader@v1.9
+        uses: robinraju/release-downloader@v1.11
         with:
           releaseId: ${{ needs.release.outputs.release_id }}
           filename: "*"
@@ -483,7 +491,7 @@ jobs:
           echo "ALPINE_PATCH_VERSION=$alpinePatchVersion" >>"$GITHUB_ENV"
 
       - name: Build image and push to Docker Hub and GitHub image registry
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64,linux/arm64,linux/arm/v7

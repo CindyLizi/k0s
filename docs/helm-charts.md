@@ -13,13 +13,25 @@ Adding Helm charts into the k0s configuration file gives you a declarative way i
 
 ### Wait for install
 
-Each chart is proccesed the same way CLI tool does with following options:
+Each chart is processed the same way CLI tool does with following options:
 
 - `--wait`
 - `--wait-for-jobs`
-- `--timeout 10m`
 
-It is possible to customize timeout by using `.Timeout` field.
+It is possible to customize the timeout by using the `timeout' field.
+
+### Repository configuration
+
+| Field    | Default value | Description                                                              |
+|----------|---------------|--------------------------------------------------------------------------|
+| name     | _(required)_  | The repository name                                                      |
+| url      | _(required)_  | The repository URL                                                       |
+| insecure | true          | Whether to skip TLS certificate checks when connecting to the repository |
+| caFile   | -             | CA bundle file to use when verifying HTTPS-enabled servers               |
+| certFile | -             | The TLS certificate file to use for HTTPS client authentication          |
+| keyfile  | -             | The TLS key file to use for HTTPS client authentication                  |
+| username | -             | Username for Basic HTTP authentication                                   |
+| password | -             | Password for Basic HTTP authentication                                   |
 
 ### Chart configuration
 
@@ -28,7 +40,7 @@ It is possible to customize timeout by using `.Timeout` field.
 | name      | -             | Release name                                                         |
 | chartname | -             | chartname in form "repository/chartname" or path to tgz file         |
 | version   | -             | version to install                                                   |
-| timeout   | 10m           | timeout to wait for release install                                  |
+| timeout   | -             | timeout to wait for release install                                  |
 | values    | -             | yaml as a string, custom chart values                                |
 | namespace | -             | namespace to install chart into                                      |
 | order     | 0             | order to apply manifest. For equal values, alphanum ordering is used |

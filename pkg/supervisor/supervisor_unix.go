@@ -35,28 +35,17 @@ const (
 
 // killPid signals SIGTERM to a PID and if it's still running after
 // s.TimeoutStop sends SIGKILL.
-func (s *Supervisor) killPid(pid int, check <-chan time.Time, deadline <-chan time.Time) error {
-	if s.KillFunction == nil {
-		s.KillFunction = syscall.Kill
-	}
+func (s *Supervisor) killPid(pid int) error {
 	// Kill the process pid
-	if deadline == nil {
-		deadlineTicker := time.NewTicker(s.TimeoutStop)
-		deadline = deadlineTicker.C
-		defer deadlineTicker.Stop()
-	}
-	if check == nil {
-		checkTicker := time.NewTicker(exitCheckInterval)
-		check = checkTicker.C
-		defer checkTicker.Stop()
+	deadlineTicker := time.NewTicker(s.TimeoutStop)
+	defer deadlineTicker.Stop()
+	checkTicker := time.NewTicker(exitCheckInterval)
+	defer checkTicker.Stop()
 
-	}
-
-	// Using two tickers is not very elegant but makes testing easier...
 Loop:
 	for {
 		select {
-		case <-check:
+		case <-checkTicker.C:
 			shouldKill, err := s.shouldKillProcess(pid)
 			if err != nil {
 				return err
@@ -65,13 +54,13 @@ Loop:
 				return nil
 			}
 
-			err = s.KillFunction(pid, syscall.SIGTERM)
+			err = syscall.Kill(pid, syscall.SIGTERM)
 			if errors.Is(err, syscall.ESRCH) {
 				return nil
 			} else if err != nil {
-				return fmt.Errorf("failed to send SIGTERM to pid %d: %w", s.cmd.Process.Pid, err)
+				return fmt.Errorf("failed to send SIGTERM: %w", err)
 			}
-		case <-deadline:
+		case <-deadlineTicker.C:
 			break Loop
 		}
 	}
@@ -84,11 +73,11 @@ Loop:
 		return nil
 	}
 
-	err = s.KillFunction(pid, syscall.SIGKILL)
+	err = syscall.Kill(pid, syscall.SIGKILL)
 	if errors.Is(err, syscall.ESRCH) {
 		return nil
 	} else if err != nil {
-		return fmt.Errorf("failed to send SIGKILL to pid %d: %w", s.cmd.Process.Pid, err)
+		return fmt.Errorf("failed to send SIGKILL: %w", err)
 	}
 	return nil
 }
@@ -97,12 +86,7 @@ Loop:
 // the same binary as the supervisor's and also checks that the env
 // `_KOS_MANAGED=yes`. This function does not delete the old pidFile as
 // this is done by the caller.
-// The tickers are used for testing purposes, otherwise set them to nil.
-func (s *Supervisor) maybeKillPidFile(check <-chan time.Time, deadline <-chan time.Time) error {
-	if s.ProcFSPath == "" {
-		s.ProcFSPath = "/proc"
-	}
-
+func (s *Supervisor) maybeKillPidFile() error {
 	pid, err := os.ReadFile(s.PidFile)
 	if os.IsNotExist(err) {
 		return nil
@@ -115,15 +99,19 @@ func (s *Supervisor) maybeKillPidFile(check <-chan time.Time, deadline <-chan ti
 		return fmt.Errorf("failed to parse pid file %s: %w", s.PidFile, err)
 	}
 
-	return s.killPid(p, check, deadline)
+	if err := s.killPid(p); err != nil {
+		return fmt.Errorf("failed to kill process with PID %d: %w", p, err)
+	}
+
+	return nil
 }
 
 func (s *Supervisor) shouldKillProcess(pid int) (bool, error) {
-	cmdline, err := os.ReadFile(filepath.Join(s.ProcFSPath, strconv.Itoa(pid), "cmdline"))
+	cmdline, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(pid), "cmdline"))
 	if os.IsNotExist(err) {
 		return false, nil
 	} else if err != nil {
-		return false, fmt.Errorf("failed to read process %d cmdline: %w", pid, err)
+		return false, fmt.Errorf("failed to read process cmdline: %w", err)
 	}
 
 	// only kill process if it has the expected cmd
@@ -133,11 +121,11 @@ func (s *Supervisor) shouldKillProcess(pid int) (bool, error) {
 	}
 
 	//only kill process if it has the _KOS_MANAGED env set
-	env, err := os.ReadFile(filepath.Join(s.ProcFSPath, strconv.Itoa(pid), "environ"))
+	env, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(pid), "environ"))
 	if os.IsNotExist(err) {
 		return false, nil
 	} else if err != nil {
-		return false, fmt.Errorf("failed to read process %d environ: %w", pid, err)
+		return false, fmt.Errorf("failed to read process environ: %w", err)
 	}
 
 	for _, e := range strings.Split(string(env), "\x00") {

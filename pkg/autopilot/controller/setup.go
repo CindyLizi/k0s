@@ -20,7 +20,6 @@ import (
 	"runtime"
 	"time"
 
-	autopilot "github.com/k0sproject/k0s/pkg/apis/autopilot"
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	apcli "github.com/k0sproject/k0s/pkg/autopilot/client"
 	apcomm "github.com/k0sproject/k0s/pkg/autopilot/common"
@@ -213,12 +212,6 @@ func getControllerAPIAddress() (string, error) {
 // waitForControlNodesCRD waits until the controlnodes CRD is established for
 // max 2 minutes.
 func (sc *setupController) waitForControlNodesCRD(ctx context.Context, cf apcli.FactoryInterface) error {
-	// Some shortcuts for very long type names.
-	type (
-		crd     = extensionsv1.CustomResourceDefinition
-		crdList = extensionsv1.CustomResourceDefinitionList
-	)
-
 	extClient, err := cf.GetExtensionClient()
 	if err != nil {
 		return fmt.Errorf("unable to obtain extensions client: %w", err)
@@ -226,8 +219,8 @@ func (sc *setupController) waitForControlNodesCRD(ctx context.Context, cf apcli.
 
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
-	return watch.FromClient[*crdList, crd](extClient.CustomResourceDefinitions()).
-		WithObjectName(fmt.Sprintf("controlnodes.%s", autopilot.GroupName)).
+	return watch.CRDs(extClient.CustomResourceDefinitions()).
+		WithObjectName(fmt.Sprintf("controlnodes.%s", apv1beta2.GroupName)).
 		WithErrorCallback(func(err error) (time.Duration, error) {
 			if retryDelay, e := watch.IsRetryable(err); e == nil {
 				sc.log.WithError(err).Debugf(
@@ -238,7 +231,7 @@ func (sc *setupController) waitForControlNodesCRD(ctx context.Context, cf apcli.
 			}
 			return 0, err
 		}).
-		Until(ctx, func(item *crd) (bool, error) {
+		Until(ctx, func(item *extensionsv1.CustomResourceDefinition) (bool, error) {
 			for _, cond := range item.Status.Conditions {
 				if cond.Type == extensionsv1.Established {
 					return cond.Status == extensionsv1.ConditionTrue, nil

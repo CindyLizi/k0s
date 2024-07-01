@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 
-	autopilot "github.com/k0sproject/k0s/pkg/apis/autopilot"
 	apv1beta2 "github.com/k0sproject/k0s/pkg/apis/autopilot/v1beta2"
 	appc "github.com/k0sproject/k0s/pkg/autopilot/controller/plans/core"
 	apclient "github.com/k0sproject/k0s/pkg/client/clientset"
@@ -57,16 +56,10 @@ func WaitForPlanState(ctx context.Context, client apclient.Interface, name strin
 
 // WaitForCRDByName waits until the CRD with the given name is established.
 func WaitForCRDByName(ctx context.Context, client extensionsclient.ApiextensionsV1Interface, name string) error {
-	// Some shortcuts for very long type names.
-	type (
-		crd     = extensionsv1.CustomResourceDefinition
-		crdList = extensionsv1.CustomResourceDefinitionList
-	)
-
-	return watch.FromClient[*crdList, crd](client.CustomResourceDefinitions()).
-		WithObjectName(fmt.Sprintf("%s.%s", name, autopilot.GroupName)).
+	return watch.CRDs(client.CustomResourceDefinitions()).
+		WithObjectName(fmt.Sprintf("%s.%s", name, apv1beta2.GroupName)).
 		WithErrorCallback(common.RetryWatchErrors(logrus.Infof)).
-		Until(ctx, func(item *crd) (bool, error) {
+		Until(ctx, func(item *extensionsv1.CustomResourceDefinition) (bool, error) {
 			for _, cond := range item.Status.Conditions {
 				if cond.Type == extensionsv1.Established {
 					return cond.Status == extensionsv1.ConditionTrue, nil
