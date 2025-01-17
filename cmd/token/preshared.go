@@ -29,6 +29,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	"k8s.io/client-go/kubernetes/scheme"
+	bootstraptokenv1 "k8s.io/kubernetes/cmd/kubeadm/app/apis/bootstraptoken/v1"
 
 	"github.com/k0sproject/k0s/internal/pkg/file"
 	"github.com/k0sproject/k0s/pkg/config"
@@ -78,19 +79,22 @@ func preSharedCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&certPath, "cert", "", "path to the CA certificate file")
-	cmd.Flags().StringVar(&joinURL, "url", "", "url of the api server to join")
-	cmd.Flags().StringVar(&preSharedRole, "role", "worker", "token role. valid values: worker, controller. Default: worker")
-	cmd.Flags().StringVar(&outDir, "out", ".", "path to the output directory. Default: current dir")
-	cmd.Flags().DurationVar(&validity, "valid", 0, "how long token is valid, in Go duration format")
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+
+	flags := cmd.Flags()
+	flags.AddFlagSet(config.GetPersistentFlagSet())
+	flags.StringVar(&certPath, "cert", "", "path to the CA certificate file")
+	flags.StringVar(&joinURL, "url", "", "url of the api server to join")
+	flags.StringVar(&preSharedRole, "role", "worker", "token role. valid values: worker, controller. Default: worker")
+	flags.StringVar(&outDir, "out", ".", "path to the output directory. Default: current dir")
+	flags.DurationVar(&validity, "valid", 0, "how long token is valid, in Go duration format")
+
 	return cmd
 }
 
-func createSecret(role string, validity time.Duration, outDir string) (string, error) {
+func createSecret(role string, validity time.Duration, outDir string) (*bootstraptokenv1.BootstrapTokenString, error) {
 	secret, token, err := token.RandomBootstrapSecret(role, validity)
 	if err != nil {
-		return "", fmt.Errorf("failed to generate bootstrap secret: %w", err)
+		return nil, fmt.Errorf("failed to generate bootstrap secret: %w", err)
 	}
 
 	if err := file.WriteAtomically(filepath.Join(outDir, secret.Name+".yaml"), 0640, func(unbuffered io.Writer) error {
@@ -102,13 +106,13 @@ func createSecret(role string, validity time.Duration, outDir string) (string, e
 		}
 		return w.Flush()
 	}); err != nil {
-		return "", fmt.Errorf("failed to save bootstrap secret: %w", err)
+		return nil, fmt.Errorf("failed to save bootstrap secret: %w", err)
 	}
 
 	return token, nil
 }
 
-func createKubeConfig(tokenString, role, joinURL, certPath, outDir string) error {
+func createKubeConfig(tok *bootstraptokenv1.BootstrapTokenString, role, joinURL, certPath, outDir string) error {
 	caCert, err := os.ReadFile(certPath)
 	if err != nil {
 		return fmt.Errorf("error reading certificate: %w", err)
@@ -123,7 +127,7 @@ func createKubeConfig(tokenString, role, joinURL, certPath, outDir string) error
 	default:
 		return fmt.Errorf("unknown role: %s", role)
 	}
-	kubeconfig, err := token.GenerateKubeconfig(joinURL, caCert, userName, tokenString)
+	kubeconfig, err := token.GenerateKubeconfig(joinURL, caCert, userName, tok)
 	if err != nil {
 		return fmt.Errorf("error generating kubeconfig: %w", err)
 	}
@@ -133,7 +137,7 @@ func createKubeConfig(tokenString, role, joinURL, certPath, outDir string) error
 		return fmt.Errorf("error encoding token: %w", err)
 	}
 
-	err = file.WriteContentAtomically(filepath.Join(outDir, "token_"+tokenString), []byte(encodedToken), 0640)
+	err = file.WriteContentAtomically(filepath.Join(outDir, "token_"+tok.ID), []byte(encodedToken), 0640)
 	if err != nil {
 		return fmt.Errorf("error writing kubeconfig: %w", err)
 	}

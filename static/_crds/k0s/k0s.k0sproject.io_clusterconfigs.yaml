@@ -508,12 +508,15 @@ spec:
                           Keepalived contains configuration options related to the "Keepalived" type
                           of load balancing.
                         properties:
+                          disableLoadBalancer:
+                            description: DisableLoadBalancer disables the load balancer.
+                            type: boolean
                           userSpaceProxyBindPort:
                             default: 6444
                             description: |-
                               UserspaceProxyPort is the port where the userspace proxy will bind
-                              to. This port is only exposed on the localhost interface and is only
-                              used internally. Defaults to 6444.
+                              to. This port is only used internally, but listens on every interface.
+                              Defaults to 6444
                             maximum: 65535
                             minimum: 1
                             type: integer
@@ -685,7 +688,7 @@ spec:
                       iptables:
                         description: |-
                           KubeProxyIPTablesConfiguration contains iptables-related kube-proxy configuration
-                          @see https://github.com/kubernetes/kube-proxy/blob/v0.31.3/config/v1alpha1/types.go#L27-L48
+                          @see https://github.com/kubernetes/kube-proxy/blob/v0.31.5/config/v1alpha1/types.go#L27-L48
                         properties:
                           localhostNodePorts:
                             type: boolean
@@ -702,7 +705,7 @@ spec:
                       ipvs:
                         description: |-
                           KubeProxyIPVSConfiguration contains ipvs-related kube-proxy configuration
-                          @see https://github.com/kubernetes/kube-proxy/blob/v0.31.3/config/v1alpha1/types.go#L52-L78
+                          @see https://github.com/kubernetes/kube-proxy/blob/v0.31.5/config/v1alpha1/types.go#L52-L78
                         properties:
                           excludeCIDRs:
                             items:
@@ -733,7 +736,7 @@ spec:
                       nftables:
                         description: |-
                           KubeProxyNFTablesConfiguration contains nftables-related kube-proxy configuration
-                          @see https://github.com/kubernetes/kube-proxy/blob/v0.31.3/config/v1alpha1/types.go#L82-L97
+                          @see https://github.com/kubernetes/kube-proxy/blob/v0.31.5/config/v1alpha1/types.go#L82-L97
                         properties:
                           masqueradeAll:
                             type: boolean

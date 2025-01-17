@@ -47,7 +47,7 @@ func tokenListCmd() *cobra.Command {
 				return err
 			}
 
-			tokens, err := manager.List(cmd.Context(), listTokenRole)
+			tokens, err := manager.List(cmd.Context())
 			if err != nil {
 				return err
 			}
@@ -70,7 +70,9 @@ func tokenListCmd() *cobra.Command {
 			table.SetTablePadding("\t") // pad with tabs
 			table.SetNoWhiteSpace(true)
 			for _, t := range tokens {
-				table.Append(t.ToArray())
+				if listTokenRole == "" || listTokenRole == t.Role {
+					table.Append(t.ToArray())
+				}
 			}
 
 			table.Render()
@@ -78,7 +80,10 @@ func tokenListCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&listTokenRole, "role", "", "Either worker, controller or empty for all roles")
-	cmd.PersistentFlags().AddFlagSet(config.GetPersistentFlagSet())
+
+	flags := cmd.Flags()
+	flags.AddFlagSet(config.GetPersistentFlagSet())
+	flags.StringVar(&listTokenRole, "role", "", "Either worker, controller or empty for all roles")
+
 	return cmd
 }
