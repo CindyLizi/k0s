@@ -108,7 +108,7 @@ func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 		"v":                                a.LogLevel,
 	}
 
-	// Handle the extra args as last so they can be used to overrride some k0s "hardcodings"
+	// Handle the extra args as last so they can be used to override some k0s "hardcodings"
 	if a.ExtraArgs != "" {
 		// This service uses args without hyphens, so enforce that.
 		extras := flags.Split(strings.ReplaceAll(a.ExtraArgs, "--", ""))
@@ -116,8 +116,10 @@ func (a *Manager) Reconcile(_ context.Context, clusterConfig *v1beta1.ClusterCon
 	}
 
 	if clusterConfig.Spec.Network.DualStack.Enabled {
-		args["node-cidr-mask-size-ipv6"] = "110"
+		args["node-cidr-mask-size-ipv6"] = "117"
 		args["node-cidr-mask-size-ipv4"] = "24"
+	} else if clusterConfig.Spec.Network.IsSingleStackIPv6() {
+		args["node-cidr-mask-size"] = "117"
 	} else {
 		args["node-cidr-mask-size"] = "24"
 	}
