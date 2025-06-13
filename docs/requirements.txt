@@ -32,11 +32,11 @@ python-dateutil==2.9.0.post0
 PyYAML==6.0.2
 pyyaml_env_tag==1.1
 regex==2024.11.6
-requests==2.32.3
+requests==2.32.4
 six==1.17.0
 termcolor==3.1.0
 urllib3==1.26.20
 verspec==0.1.0
 watchdog==6.0.0
 wcmatch==10.0
-zipp==3.22.0
+zipp==3.23.0

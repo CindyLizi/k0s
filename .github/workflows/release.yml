@@ -30,7 +30,7 @@ jobs:
           echo TAG_NAME="${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
       - name: Create Release
         id: create_release
-        uses: shogo82148/actions-create-release@v1.7.7
+        uses: shogo82148/actions-create-release@v1.7.8
         with:
           release_name: ${{ steps.branch_name.outputs.TAG_NAME }}
           draft: true # So we can manually edit before publishing
@@ -47,7 +47,6 @@ jobs:
     runs-on: [self-hosted, linux, x64]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
-      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
     steps:
       - name: Clean Docker before build
         run: |
@@ -107,7 +106,7 @@ jobs:
           cat k0s.sig
 
       - name: Upload Release Assets - Binary
-        uses: shogo82148/actions-upload-release-asset@v1.8.0
+        uses: shogo82148/actions-upload-release-asset@v1.8.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s
@@ -115,7 +114,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Release Assets - Airgap Image List
-        uses: shogo82148/actions-upload-release-asset@v1.8.0
+        uses: shogo82148/actions-upload-release-asset@v1.8.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./airgap-images.txt
@@ -123,7 +122,7 @@ jobs:
           asset_content_type: text/plain
 
       - name: Upload Release Assets - Signature
-        uses: shogo82148/actions-upload-release-asset@v1.8.0
+        uses: shogo82148/actions-upload-release-asset@v1.8.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s.sig
@@ -137,7 +136,7 @@ jobs:
           path: ./k0s
 
       - name: Upload Release Assets - Bundle
-        uses: shogo82148/actions-upload-release-asset@v1.8.0
+        uses: shogo82148/actions-upload-release-asset@v1.8.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./airgap-image-bundle-linux-amd64.tar
@@ -165,7 +164,6 @@ jobs:
     runs-on: [self-hosted, linux, x64]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
-      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
       TARGET_OS: windows
     steps:
       # https://github.com/actions/checkout/issues/273#issuecomment-642908752 (see below)
@@ -203,7 +201,7 @@ jobs:
           docker system prune --all --volumes --force
 
       - name: Upload Release Assets
-        uses: shogo82148/actions-upload-release-asset@v1.8.0
+        uses: shogo82148/actions-upload-release-asset@v1.8.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s.exe
@@ -211,7 +209,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Release Assets - Signature
-        uses: shogo82148/actions-upload-release-asset@v1.8.0
+        uses: shogo82148/actions-upload-release-asset@v1.8.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s.exe.sig
@@ -234,7 +232,6 @@ jobs:
     runs-on: [self-hosted, linux, arm64]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
-      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
     steps:
       - name: Set up Docker Context for Buildx
         run: docker context create builders
@@ -287,7 +284,7 @@ jobs:
             /tmp/support-bundle.tar.gz
 
       - name: Upload Release Assets - Binary
-        uses: shogo82148/actions-upload-release-asset@v1.8.0
+        uses: shogo82148/actions-upload-release-asset@v1.8.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s
@@ -295,7 +292,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Release Assets - Signature
-        uses: shogo82148/actions-upload-release-asset@v1.8.0
+        uses: shogo82148/actions-upload-release-asset@v1.8.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s.sig
@@ -309,7 +306,7 @@ jobs:
           path: ./k0s
 
       - name: Upload Release Assets - Bundle
-        uses: shogo82148/actions-upload-release-asset@v1.8.0
+        uses: shogo82148/actions-upload-release-asset@v1.8.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./airgap-image-bundle-linux-arm64.tar
@@ -321,7 +318,6 @@ jobs:
     runs-on: [self-hosted, linux, arm]
     env:
       SEGMENT_TOKEN: ${{ secrets.SEGMENT_WRITE_KEY_PROD }}
-      EULA_NOTICE: ${{ secrets.EULA_NOTICE }}
     steps:
       # https://github.com/actions/checkout/issues/273#issuecomment-642908752 (see below)
       - name: "Pre: Fixup directories"
@@ -374,7 +370,7 @@ jobs:
             /tmp/support-bundle.tar.gz
 
       - name: Upload Release Assets - Binary
-        uses: shogo82148/actions-upload-release-asset@v1.8.0
+        uses: shogo82148/actions-upload-release-asset@v1.8.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s
@@ -382,7 +378,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Release Assets - Signature
-        uses: shogo82148/actions-upload-release-asset@v1.8.0
+        uses: shogo82148/actions-upload-release-asset@v1.8.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./k0s.sig
@@ -396,7 +392,7 @@ jobs:
           path: ./k0s
 
       - name: Upload Release Assets - Bundle
-        uses: shogo82148/actions-upload-release-asset@v1.8.0
+        uses: shogo82148/actions-upload-release-asset@v1.8.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./airgap-image-bundle-linux-arm.tar
@@ -438,7 +434,7 @@ jobs:
         run: |
           cd release_assets && sha256sum -b * > ../sha256sums.txt
       - name: Upload sha256sums.txt
-        uses: shogo82148/actions-upload-release-asset@v1.8.0
+        uses: shogo82148/actions-upload-release-asset@v1.8.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: sha256sums.txt
@@ -528,7 +524,7 @@ jobs:
           make sign-pub-key
 
       - name: Upload Release Assets - SBOM
-        uses: shogo82148/actions-upload-release-asset@v1.8.0
+        uses: shogo82148/actions-upload-release-asset@v1.8.1
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./sbom/*
@@ -619,7 +615,7 @@ jobs:
         working-directory: ./inttest
 
       - name: Upload conformance test result to Release Assets
-        uses: shogo82148/actions-upload-release-asset@v1.8.0 # Allows us to upload a file with wildcard patterns
+        uses: shogo82148/actions-upload-release-asset@v1.8.1 # Allows us to upload a file with wildcard patterns
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: inttest/*_sonobuoy_*.tar.gz
